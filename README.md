@@ -17,7 +17,7 @@ Add this to your dependencies:
 <dependency>
     <groupId>com.github.matyas-toth</groupId>
     <artifactId>Catalyst</artifactId>
-    <version>master-SNAPSHOT</version>
+    <version>0.1.1-BETA</version>
 </dependency>
 ```
 
@@ -35,7 +35,7 @@ Repositories:
 Dependencies:
 ```gradle
 	dependencies {
-		implementation 'com.github.matyas-toth:Catalyst:master-SNAPSHOT'
+		implementation 'com.github.matyas-toth:Catalyst:0.1.1-BETA'
 	}
 ```
 
