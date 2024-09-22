@@ -66,12 +66,34 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
             for (int i = 0; i < paramTypes.length; i++) {
 
                 boolean isOptional = false;
+                boolean isJoin = false;
 
                 for (Annotation annotation : paramAnnotations[i]) {
                     if (annotation.annotationType() == Optional.class) {
                         isOptional = true;
-                        break;
+
+                    } else if(annotation.annotationType() == Join.class) {
+                        isJoin = true;
+
                     }
+                }
+
+                if(i + 1 == paramTypes.length && paramTypes[i] == String.class && isJoin) {
+
+                    String concatenated = "";
+
+                    for(int y = i; y < args.length; y++) {
+                        if(y + 1 != args.length) {
+                            concatenated = concatenated + args[y] + " ";
+                        } else {
+                            concatenated = concatenated + args[y];
+                        }
+                    }
+
+                    paramValues[i] = concatenated;
+
+                    return true;
+
                 }
 
                 if (i < args.length) {
@@ -263,12 +285,34 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
             for (int i = 0; i < paramTypes.length; i++) {
 
                 boolean isOptional = false;
+                boolean isJoin = false;
 
                 for (Annotation annotation : paramAnnotations[i]) {
                     if (annotation.annotationType() == Optional.class) {
                         isOptional = true;
-                        break;
+
+                    } else if(annotation.annotationType() == Join.class) {
+                        isJoin = true;
+
                     }
+                }
+
+                if(i + 1 == paramTypes.length && paramTypes[i] == String.class && isJoin) {
+
+                    String concatenated = "";
+
+                    for(int y = i + 1; y < args.length; y++) {
+                        if(y + 1 != args.length) {
+                            concatenated = concatenated + args[y] + " ";
+                        } else {
+                            concatenated = concatenated + args[y];
+                        }
+                    }
+
+                    paramValues[i] = concatenated;
+
+                    return true;
+
                 }
 
                 if (i + 1 < args.length) {
