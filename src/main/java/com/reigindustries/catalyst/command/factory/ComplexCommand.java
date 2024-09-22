@@ -2,10 +2,8 @@ package com.reigindustries.catalyst.command.factory;
 
 import com.reigindustries.catalyst.Catalyst;
 import com.reigindustries.catalyst.command.CatalystCommand;
-import com.reigindustries.catalyst.command.factory.annotations.AutoComplete;
+import com.reigindustries.catalyst.command.factory.annotations.*;
 import com.reigindustries.catalyst.command.factory.annotations.Optional;
-import com.reigindustries.catalyst.command.factory.annotations.Permission;
-import com.reigindustries.catalyst.command.factory.annotations.Subcommand;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
@@ -28,6 +26,7 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
     private Player player;
     private List<String> args = new ArrayList<>();
     private final Map<String, Method> subCommands = new HashMap<>();
+    private Method indexMethod = null;
 
 
     public ComplexCommand() {
@@ -38,6 +37,8 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                 for (String alias : subcommand.value().split("\\|")) {
                     subCommands.put(alias, method);
                 }
+            } else if (method.isAnnotationPresent(Index.class)) {
+                indexMethod = method;
             }
         }
     }
@@ -51,9 +52,193 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
             this.player = (Player) sender;
         }
 
-        if (args.length == 0) {
-            index();
+        if(subCommands.isEmpty()) {
+
+            if (indexMethod == null) {
+                sender.sendMessage("No @Index method found.");
+                return true;
+            }
+
+            Class<?>[] paramTypes = indexMethod.getParameterTypes();
+            Object[] paramValues = new Object[paramTypes.length];
+            Annotation[][] paramAnnotations = indexMethod.getParameterAnnotations();
+
+            for (int i = 0; i < paramTypes.length; i++) {
+
+                boolean isOptional = false;
+
+                for (Annotation annotation : paramAnnotations[i]) {
+                    if (annotation.annotationType() == Optional.class) {
+                        isOptional = true;
+                        break;
+                    }
+                }
+
+                if (i < args.length) {
+
+
+                    if (paramTypes[i] == String.class) {
+                        paramValues[i] = args[i];
+                    } else if (paramTypes[i] == Integer.class) {
+                        try {
+                            paramValues[i] = Integer.parseInt(args[i]);
+                        } catch (NumberFormatException e) {
+
+                            sender.sendMessage("Invalid integer for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == Double.class) {
+                        try {
+                            paramValues[i] = Double.parseDouble(args[i]);
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage("Invalid double for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == Float.class) {
+                        try {
+                            paramValues[i] = Float.parseFloat(args[i]);
+                        } catch(NumberFormatException e) {
+                            sender.sendMessage("Invalid float for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == Material.class) {
+                        if(Material.getMaterial(args[i]) == null) {
+                            sender.sendMessage("Invalid material for argument " + (i));
+                            return true;
+                        } else {
+                            paramValues[i] = Material.getMaterial(args[i]);
+                        }
+                    } else if (paramTypes[i] == World.class) {
+                        if(Bukkit.getWorld(args[i]) == null) {
+                            sender.sendMessage("Invalid world for argument " + (i));
+                            return true;
+                        } else {
+                            paramValues[i] = Bukkit.getWorld(args[i]);
+                        }
+                    } else if (paramTypes[i] == Player.class) {
+                        if(Bukkit.getPlayer(args[i]) == null) {
+                            sender.sendMessage("Invalid player for argument " + (i));
+                            return true;
+                        } else {
+                            paramValues[i] = Bukkit.getPlayer(args[i]);
+                        }
+                    } else if (paramTypes[i] == OfflinePlayer.class) {
+                        paramValues[i] = Bukkit.getOfflinePlayer(args[i]);
+                    } else if (paramTypes[i] == Boolean.class) {
+                        paramValues[i] = Boolean.parseBoolean(args[i]);
+                    } else if (paramTypes[i].isEnum()) {
+                        try {
+                            paramValues[i] = Enum.valueOf((Class<Enum>) paramTypes[i], args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid value for enum argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == UUID.class) {
+                        try {
+                            paramValues[i] = UUID.fromString(args[i]);
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid UUID for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == PotionEffectType.class) {
+                        PotionEffectType effect = PotionEffectType.getByName(args[i].toUpperCase());
+                        if (effect == null) {
+                            sender.sendMessage("Invalid potion effect for argument " + (i));
+                            return true;
+                        }
+                        paramValues[i] = effect;
+                    } else if (paramTypes[i] == Enchantment.class) {
+                        Enchantment enchantment = Enchantment.getByName(args[i].toUpperCase());
+                        if (enchantment == null) {
+                            sender.sendMessage("Invalid enchantment for argument " + (i));
+                            return true;
+                        }
+                        paramValues[i] = enchantment;
+                    } else if (paramTypes[i] == Sound.class) {
+                        try {
+                            paramValues[i] = Sound.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid sound for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == ChatColor.class) {
+                        try {
+                            paramValues[i] = ChatColor.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid color for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == Difficulty.class) {
+                        try {
+                            paramValues[i] = Difficulty.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid difficulty for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == GameMode.class) {
+                        try {
+                            paramValues[i] = GameMode.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid game mode for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == Biome.class) {
+                        Biome biome = Biome.valueOf(args[i].toUpperCase());
+                        if (biome == null) {
+                            sender.sendMessage("Invalid biome for argument " + (i));
+                            return true;
+                        }
+                        paramValues[i] = biome;
+                    } else if (paramTypes[i] == WeatherType.class) {
+                        try {
+                            paramValues[i] = WeatherType.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid weather type for argument " + (i));
+                            return true;
+                        }
+                    } else if (paramTypes[i] == EntityType.class) {
+                        try {
+                            paramValues[i] = EntityType.valueOf(args[i].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("Invalid entity type for argument " + (i));
+                            return true;
+                        }
+                    }
+
+                    if (paramValues[i] == null) {
+                        return true;
+                    }
+                } else if (isOptional) {
+
+                    paramValues[i] = getDefaultValue(paramTypes[i]);
+                } else {
+
+                    sender.sendMessage("Missing required argument " + (i));
+                    return true;
+                }
+
+            }
+
+            try {
+                indexMethod.invoke(this, paramValues);
+            } catch (Exception e) {
+                e.printStackTrace();
+                sender.sendMessage("An error occurred while executing the @Index method.");
+            }
+
+            ///
+
             return true;
+        }
+
+        if (args.length == 0) {
+            try {
+                indexMethod.invoke(this);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                sender.sendMessage("An error occurred while executing the default @Index method.");
+            }
         }
 
         if (sender instanceof Player) {
@@ -251,6 +436,65 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
 
         List<String> completions = new ArrayList<>();
 
+        if(subCommands.isEmpty()) {
+
+            if (indexMethod != null) {
+
+                Annotation[][] paramAnnotations = indexMethod.getParameterAnnotations();
+
+
+                int argIndex = args.length - 1;
+
+                if (argIndex < paramAnnotations.length) {
+                    for (Annotation annotation : paramAnnotations[argIndex]) {
+                        if (annotation instanceof AutoComplete) {
+                            String autoCompleteValue = ((AutoComplete) annotation).value();
+
+                            if (autoCompleteValue.equalsIgnoreCase("#onlineplayers")) {
+                                for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                                    completions.add(onlinePlayer.getName());
+                                }
+                            } else if (autoCompleteValue.equalsIgnoreCase("#materials")) {
+                                for (Material material : Material.values()) {
+                                    completions.add(material.name());
+                                }
+                            } else if (autoCompleteValue.startsWith("#range:")) {
+                                String[] split = autoCompleteValue.split(":");
+                                String[] range = split[1].split("-");
+
+                                for(int x = Integer.parseInt(range[0]); x <= Integer.parseInt(range[1]); x++) {
+                                    completions.add(String.valueOf(x));
+                                }
+                            } else if (autoCompleteValue.startsWith("#enum:")) {
+                                String enumName = autoCompleteValue.substring("#enum:".length());
+                                try {
+                                    Class<?> enumClass = Class.forName(enumName);
+                                    if (enumClass.isEnum()) {
+                                        for (Object enumConstant : enumClass.getEnumConstants()) {
+                                            completions.add(enumConstant.toString());
+                                        }
+                                    } else {
+                                        sender.sendMessage("Error: " + enumName + " is not an enum.");
+                                    }
+                                } catch (ClassNotFoundException e) {
+                                    sender.sendMessage("Error: Enum class " + enumName + " not found.");
+                                }
+                            }
+
+
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return completions.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[args.length - 1].toLowerCase()))
+                    .collect(Collectors.toList());
+
+        }
+
         // Handle subcommands
         if (args.length == 0 || args.length == 1) {
 
@@ -343,8 +587,6 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
     protected List<String> getArgs() {
         return args;
     }
-
-    public abstract void index();
 
     public void noPerm() {
         getPlayer().sendMessage(ChatColor.RED + "You don't have permission to run this command!");

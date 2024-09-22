@@ -6,7 +6,7 @@
 
     <groupId>com.reigindustries</groupId>
     <artifactId>Catalyst</artifactId>
-    <version>0.0.1-BETA</version>
+    <version>0.1.0-BETA</version>
     <packaging>jar</packaging>
 
     <name>Catalyst</name>
