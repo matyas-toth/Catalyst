@@ -3,11 +3,14 @@ package com.reigindustries.catalyst.command;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class CoreCommand extends Command {
 
     private final Consumer<CommandContext> handler;
+    private Function<CommandContext, List<String>> tabCompleter;
 
     public CoreCommand(String name, Consumer<CommandContext> handler) {
         super(name);
@@ -19,6 +22,19 @@ public class CoreCommand extends Command {
         CommandContext context = new CommandContext(sender, args);
         handler.accept(context);
         return true;
+    }
+
+    public void setTabCompleter(Function<CommandContext, List<String>> tabCompleter) {
+        this.tabCompleter = tabCompleter;
+    }
+
+    @Override
+    public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
+        CommandContext context = new CommandContext(sender, args);
+        if (tabCompleter != null) {
+            return tabCompleter.apply(context);
+        }
+        return List.of(); // Return an empty list if no tab completer is set
     }
 
     public static class CommandContext {

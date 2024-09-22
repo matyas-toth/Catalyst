@@ -27,7 +27,8 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
     private CommandSender sender;
     private Player player;
     private List<String> args = new ArrayList<>();
-    private static final Map<String, Method> subCommands = new HashMap<>();
+    private final Map<String, Method> subCommands = new HashMap<>();
+
 
     public ComplexCommand() {
         // Register subcommands
