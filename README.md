@@ -1,7 +1,7 @@
 # Catalyst
 Lightweight open source Minecraft plugin framework that aims to reduce Bukkit's verbosity while also providing useful tools for developers.
 
-### [Documentation](https://dev.reigindustries.com/catalyst-docs) | [Examples](https://dev.reigindustries.com/catalyst-examples) 
+### [Documentation](https://understood-diascia-0f5.notion.site/527233c73ac8499faafd7488ab8353f4?v=6611342351cc4419a2e004385402c330)
 
 ### How to use? (Maven)
 Add this to your respositories:
