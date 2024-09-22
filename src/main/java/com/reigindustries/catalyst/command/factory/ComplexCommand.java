@@ -92,14 +92,14 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
 
                     paramValues[i] = concatenated;
 
-                    return true;
+
 
                 }
 
                 if (i < args.length) {
 
 
-                    if (paramTypes[i] == String.class) {
+                    if (paramTypes[i] == String.class && !isJoin) {
                         paramValues[i] = args[i];
                     } else if (paramTypes[i] == Integer.class) {
                         try {
@@ -311,14 +311,12 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
 
                     paramValues[i] = concatenated;
 
-                    return true;
-
                 }
 
                 if (i + 1 < args.length) {
 
 
-                    if (paramTypes[i] == String.class) {
+                    if (paramTypes[i] == String.class && !isJoin) {
                         paramValues[i] = args[i + 1];
                     } else if (paramTypes[i] == Integer.class) {
                         try {
