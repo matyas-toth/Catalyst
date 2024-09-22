@@ -1,7 +1,0 @@
-name: Catalyst
-version: '${project.version}'
-main: com.reigindustries.catalystexample.CatalystExample
-api-version: 1.19
-authors: [Reig]
-description: The Minecraft plugin framework.
-website: reigindustries.com
