@@ -46,6 +46,14 @@
                 </executions>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <exclude>spigot.jar</exclude>
+                </excludes>
+            </resource>
+        </resources>
     </build>
 
     <repositories>
@@ -71,7 +79,7 @@
             <artifactId>spigot</artifactId>
             <version>1.19.3-R0.1-SNAPSHOT</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/spigot.jar</systemPath>
+            <systemPath>${project.basedir}/libs/spigot.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.reflections</groupId>
