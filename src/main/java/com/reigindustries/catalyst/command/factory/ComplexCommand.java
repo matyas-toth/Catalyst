@@ -82,12 +82,17 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
 
                     String concatenated = "";
 
-                    for(int y = i; y < args.length; y++) {
-                        if(y + 1 != args.length) {
-                            concatenated = concatenated + args[y] + " ";
-                        } else {
-                            concatenated = concatenated + args[y];
+                    if(i >= args.length) {
+                        concatenated = null;
+                    } else {
+                        for(int y = i; y < args.length; y++) {
+                            if(y + 1 != args.length) {
+                                concatenated = concatenated + args[y] + " ";
+                            } else {
+                                concatenated = concatenated + args[y];
+                            }
                         }
+
                     }
 
                     paramValues[i] = concatenated;
@@ -301,11 +306,15 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
 
                     String concatenated = "";
 
-                    for(int y = i + 1; y < args.length; y++) {
-                        if(y + 1 != args.length) {
-                            concatenated = concatenated + args[y] + " ";
-                        } else {
-                            concatenated = concatenated + args[y];
+                    if(i + 1 >= args.length) {
+                        concatenated = null;
+                    } else {
+                        for (int y = i + 1; y < args.length; y++) {
+                            if (y + 1 != args.length) {
+                                concatenated = concatenated + args[y] + " ";
+                            } else {
+                                concatenated = concatenated + args[y];
+                            }
                         }
                     }
 
