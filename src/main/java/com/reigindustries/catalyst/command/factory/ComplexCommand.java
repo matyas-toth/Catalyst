@@ -4,6 +4,8 @@ import com.reigindustries.catalyst.Catalyst;
 import com.reigindustries.catalyst.command.CatalystCommand;
 import com.reigindustries.catalyst.command.factory.annotations.*;
 import com.reigindustries.catalyst.command.factory.annotations.Optional;
+import com.reigindustries.catalyst.internal.config.Config;
+import com.reigindustries.catalyst.internal.config.Option;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
@@ -27,6 +29,10 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
     private List<String> args = new ArrayList<>();
     private final Map<String, Method> subCommands = new HashMap<>();
     private Method indexMethod = null;
+    protected String expectedArgumentType;
+    protected Integer expectedArgumentIndex;
+
+
 
 
     public ComplexCommand() {
@@ -52,10 +58,26 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
             this.player = (Player) sender;
         }
 
+        if (sender instanceof Player) {
+            if (!sender.hasPermission(getClass().getAnnotation(Permission.class).value())) {
+                noPermission();
+                return true;
+            }
+        } else {
+
+            if(getClass().isAnnotationPresent(RequiresPlayer.class)) {
+                requiresPlayer();
+                return true;
+            }
+
+        }
+
+
+
         if(subCommands.isEmpty()) {
 
             if (indexMethod == null) {
-                sender.sendMessage("No @Index method found.");
+                sender.sendMessage("§4§lCatalyst Error: §r§cNo @Index method found. Please report this to a system administrator.");
                 return true;
             }
 
@@ -111,40 +133,58 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                             paramValues[i] = Integer.parseInt(args[i]);
                         } catch (NumberFormatException e) {
 
-                            sender.sendMessage("Invalid integer for argument " + (i));
+                            this.expectedArgumentType = "Integer";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Double.class) {
                         try {
                             paramValues[i] = Double.parseDouble(args[i]);
                         } catch (NumberFormatException e) {
-                            sender.sendMessage("Invalid double for argument " + (i));
+                            this.expectedArgumentType = "Double";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Float.class) {
                         try {
                             paramValues[i] = Float.parseFloat(args[i]);
                         } catch(NumberFormatException e) {
-                            sender.sendMessage("Invalid float for argument " + (i));
+                            this.expectedArgumentType = "Float";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Material.class) {
                         if(Material.getMaterial(args[i]) == null) {
-                            sender.sendMessage("Invalid material for argument " + (i));
+                            this.expectedArgumentType = "Material";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Material.getMaterial(args[i]);
                         }
                     } else if (paramTypes[i] == World.class) {
                         if(Bukkit.getWorld(args[i]) == null) {
-                            sender.sendMessage("Invalid world for argument " + (i));
+                            this.expectedArgumentType = "World";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Bukkit.getWorld(args[i]);
                         }
                     } else if (paramTypes[i] == Player.class) {
                         if(Bukkit.getPlayer(args[i]) == null) {
-                            sender.sendMessage("Invalid player for argument " + (i));
+                            this.expectedArgumentType = "Player";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Bukkit.getPlayer(args[i]);
@@ -157,27 +197,39 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = Enum.valueOf((Class<Enum>) paramTypes[i], args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid value for enum argument " + (i));
+                            this.expectedArgumentType = paramTypes[i].getSimpleName();
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == UUID.class) {
                         try {
                             paramValues[i] = UUID.fromString(args[i]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid UUID for argument " + (i));
+                            this.expectedArgumentType = "UUID";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == PotionEffectType.class) {
                         PotionEffectType effect = PotionEffectType.getByName(args[i].toUpperCase());
                         if (effect == null) {
-                            sender.sendMessage("Invalid potion effect for argument " + (i));
+                            this.expectedArgumentType = "Potion Effect";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = effect;
                     } else if (paramTypes[i] == Enchantment.class) {
                         Enchantment enchantment = Enchantment.getByName(args[i].toUpperCase());
                         if (enchantment == null) {
-                            sender.sendMessage("Invalid enchantment for argument " + (i));
+                            this.expectedArgumentType = "Enchantment";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = enchantment;
@@ -185,34 +237,49 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = Sound.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid sound for argument " + (i));
+                            this.expectedArgumentType = "Sound";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == ChatColor.class) {
                         try {
                             paramValues[i] = ChatColor.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid color for argument " + (i));
+                            this.expectedArgumentType = "Color";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Difficulty.class) {
                         try {
                             paramValues[i] = Difficulty.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid difficulty for argument " + (i));
+                            this.expectedArgumentType = "Difficulty";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == GameMode.class) {
                         try {
                             paramValues[i] = GameMode.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid game mode for argument " + (i));
+                            this.expectedArgumentType = "GameMode";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Biome.class) {
                         Biome biome = Biome.valueOf(args[i].toUpperCase());
                         if (biome == null) {
-                            sender.sendMessage("Invalid biome for argument " + (i));
+                            this.expectedArgumentType = "Biome";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = biome;
@@ -220,14 +287,20 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = WeatherType.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid weather type for argument " + (i));
+                            this.expectedArgumentType = "Weather";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == EntityType.class) {
                         try {
                             paramValues[i] = EntityType.valueOf(args[i].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid entity type for argument " + (i));
+                            this.expectedArgumentType = "Entity Type";
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     }
@@ -240,7 +313,8 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                     paramValues[i] = getDefaultValue(paramTypes[i]);
                 } else {
 
-                    sender.sendMessage("Missing required argument " + (i));
+                    this.expectedArgumentIndex = i;
+                    missingRequiredArgument();
                     return true;
                 }
 
@@ -250,7 +324,7 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                 indexMethod.invoke(this, paramValues);
             } catch (Exception e) {
                 e.printStackTrace();
-                sender.sendMessage("An error occurred while executing the @Index method.");
+                sender.sendMessage("§4§lCatalyst Error: §r§cCould not execute @Index method, see console for more. Please report this to a system administrator.");
             }
 
             ///
@@ -264,13 +338,13 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                 return true;
             } catch (Exception e) {
                 e.printStackTrace();
-                sender.sendMessage("An error occurred while executing the default @Index method.");
+                sender.sendMessage("§4§lCatalyst Error: §r§cCould not execute @Index method, see console for more. Please report this to a system administrator.");
             }
         }
 
         if (sender instanceof Player) {
             if (!sender.hasPermission(getClass().getAnnotation(Permission.class).value())) {
-                noPerm();
+                noPermission();
                 return true;
             }
         } else {
@@ -332,40 +406,58 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                             paramValues[i] = Integer.parseInt(args[i + 1]);
                         } catch (NumberFormatException e) {
 
-                            sender.sendMessage("Invalid integer for argument " + (i + 1));
+                            this.expectedArgumentType = "Integer";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Double.class) {
                         try {
                             paramValues[i] = Double.parseDouble(args[i + 1]);
                         } catch (NumberFormatException e) {
-                            sender.sendMessage("Invalid double for argument " + (i + 1));
+                            this.expectedArgumentType = "Double";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Float.class) {
                         try {
                             paramValues[i] = Float.parseFloat(args[i + 1]);
                         } catch(NumberFormatException e) {
-                            sender.sendMessage("Invalid float for argument " + (i + 1));
+                            this.expectedArgumentType = "Float";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Material.class) {
                         if(Material.getMaterial(args[i + 1]) == null) {
-                            sender.sendMessage("Invalid material for argument " + (i + 1));
+                            this.expectedArgumentType = "Material";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Material.getMaterial(args[i + 1]);
                         }
                     } else if (paramTypes[i] == World.class) {
                         if(Bukkit.getWorld(args[i + 1]) == null) {
-                            sender.sendMessage("Invalid world for argument " + (i + 1));
+                            this.expectedArgumentType = "World";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Bukkit.getWorld(args[i + 1]);
                         }
                     } else if (paramTypes[i] == Player.class) {
                         if(Bukkit.getPlayer(args[i + 1]) == null) {
-                            sender.sendMessage("Invalid player for argument " + (i + 1));
+                            this.expectedArgumentType = "Player";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         } else {
                             paramValues[i] = Bukkit.getPlayer(args[i + 1]);
@@ -378,27 +470,39 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = Enum.valueOf((Class<Enum>) paramTypes[i], args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid value for enum argument " + (i + 1));
+                            this.expectedArgumentType = paramTypes[i].getSimpleName();
+                            this.expectedArgumentIndex = i;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == UUID.class) {
                         try {
                             paramValues[i] = UUID.fromString(args[i + 1]);
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid UUID for argument " + (i + 1));
+                            this.expectedArgumentType = "UUID";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == PotionEffectType.class) {
                         PotionEffectType effect = PotionEffectType.getByName(args[i + 1].toUpperCase());
                         if (effect == null) {
-                            sender.sendMessage("Invalid potion effect for argument " + (i + 1));
+                            this.expectedArgumentType = "Potion Effect";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = effect;
                     } else if (paramTypes[i] == Enchantment.class) {
                         Enchantment enchantment = Enchantment.getByName(args[i + 1].toUpperCase());
                         if (enchantment == null) {
-                            sender.sendMessage("Invalid enchantment for argument " + (i + 1));
+                            this.expectedArgumentType = "Enchantment";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = enchantment;
@@ -406,34 +510,49 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = Sound.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid sound for argument " + (i + 1));
+                            this.expectedArgumentType = "Sound";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == ChatColor.class) {
                         try {
                             paramValues[i] = ChatColor.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid color for argument " + (i + 1));
+                            this.expectedArgumentType = "Color";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Difficulty.class) {
                         try {
                             paramValues[i] = Difficulty.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid difficulty for argument " + (i + 1));
+                            this.expectedArgumentType = "Difficulty";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == GameMode.class) {
                         try {
                             paramValues[i] = GameMode.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid game mode for argument " + (i + 1));
+                            this.expectedArgumentType = "GameMode";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == Biome.class) {
                         Biome biome = Biome.valueOf(args[i + 1].toUpperCase());
                         if (biome == null) {
-                            sender.sendMessage("Invalid biome for argument " + (i + 1));
+                            this.expectedArgumentType = "Biome";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                         paramValues[i] = biome;
@@ -441,14 +560,20 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                         try {
                             paramValues[i] = WeatherType.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid weather type for argument " + (i + 1));
+                            this.expectedArgumentType = "Weather";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     } else if (paramTypes[i] == EntityType.class) {
                         try {
                             paramValues[i] = EntityType.valueOf(args[i + 1].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("Invalid entity type for argument " + (i + 1));
+                            this.expectedArgumentType = "Entity Type";
+                            this.expectedArgumentIndex = i+1;
+                            invalidUsage();
+                            sender.sendMessage(buildInvalidArgumentMessage(command, args));
                             return true;
                         }
                     }
@@ -461,7 +586,8 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                     paramValues[i] = getDefaultValue(paramTypes[i]);
                 } else {
 
-                    sender.sendMessage("Missing required argument " + (i + 1));
+                    this.expectedArgumentIndex = i+1;
+                    missingRequiredArgument();
                     return true;
                 }
 
@@ -471,11 +597,16 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                 subCommand.invoke(this, paramValues);
             } catch (Exception e) {
                 e.printStackTrace();
-                sender.sendMessage("An error occurred while executing the command.");
+                sender.sendMessage("§4§lCatalyst Error: §r§cCould not execute the subcommand, see console for more. Please report this to a system administrator.");
             }
         } else {
             // Handle unknown subcommand
-            sender.sendMessage("Unknown subcommand. Use /" + label + " for help.");
+            if(sender instanceof Player) {
+                ((Player) sender).performCommand(command.getName());
+            } else {
+                sender.sendMessage(ChatColor.RED + "Unknown subcommand. Use /" + label + " for help.");
+            }
+
         }
 
         return true;
@@ -525,10 +656,11 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                                             completions.add(enumConstant.toString());
                                         }
                                     } else {
-                                        sender.sendMessage("Error: " + enumName + " is not an enum.");
+
+                                        sender.sendMessage("§4§lCatalyst Error: §r§c"+enumName+" is not an Enum, please check tab completion rules. Please report this to a system administrator.");
                                     }
                                 } catch (ClassNotFoundException e) {
-                                    sender.sendMessage("Error: Enum class " + enumName + " not found.");
+                                    sender.sendMessage("§4§lCatalyst Error: §r§cThe enum "+enumName+" can't be found, please check tab completion rules. Please report this to a system administrator.");
                                 }
                             }
 
@@ -593,10 +725,10 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
                                             completions.add(enumConstant.toString());
                                         }
                                     } else {
-                                        sender.sendMessage("Error: " + enumName + " is not an enum.");
+                                        sender.sendMessage("§4§lCatalyst Error: §r§c"+enumName+" is not an Enum, please check tab completion rules. Please report this to a system administrator.");
                                     }
                                 } catch (ClassNotFoundException e) {
-                                    sender.sendMessage("Error: Enum class " + enumName + " not found.");
+                                    sender.sendMessage("§4§lCatalyst Error: §r§cThe enum "+enumName+" can't be found, please check tab completion rules. Please report this to a system administrator.");
                                 }
                             }
 
@@ -639,9 +771,43 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
         return args;
     }
 
-    public void noPerm() {
-        getPlayer().sendMessage(ChatColor.RED + "You don't have permission to run this command!");
+    // ${command}, ${type}, ${parameter}
+
+    public void noPermission() {
+        getSender().sendMessage(Config.get(Option.COMMAND_NO_PERMISSION_MESSAGE).replace("${command}", getCommandName()));
     }
+
+    public void invalidUsage() {
+        getSender().sendMessage(Config.get(Option.COMMAND_INVALID_PARAMETER_MESSAGE).replace("${command}", getCommandName()).replace("${type}", this.expectedArgumentType).replace("${parameter}", String.valueOf(this.expectedArgumentIndex)));
+    }
+
+    public void requiresPlayer() {
+        getSender().sendMessage(Config.get(Option.COMMAND_REQUIRES_PLAYER_MESSAGE).replace("${command}", getCommandName()));
+    }
+
+    public void missingRequiredArgument() {
+        getSender().sendMessage(Config.get(Option.COMMAND_MISSING_REQUIRED_PARAMETER_MESSAGE).replace("${command}", getCommandName()).replace("${type}", this.expectedArgumentType).replace("${parameter}", String.valueOf(this.expectedArgumentIndex)));
+    }
+
+
+
+
+    private String buildInvalidArgumentMessage(Command command, String[] args) {
+        String message = "§7/" + command.getName() + " ";
+        int index = 0;
+        for(String arg : args) {
+            if(this.expectedArgumentIndex == index) {
+                message += ChatColor.RED + "" + ChatColor.UNDERLINE + arg + " " + ChatColor.RESET;
+            } else {
+                message += ChatColor.GRAY + arg + " " + ChatColor.RESET;
+            }
+            index++;
+        }
+
+        return message;
+    }
+
+
 
     private Object getDefaultValue(Class<?> paramType) {
         if (paramType == String.class) {

@@ -1,0 +1,10 @@
+package com.reigindustries.catalyst.internal.config;
+
+public enum Option {
+
+    COMMAND_NO_PERMISSION_MESSAGE,
+    COMMAND_INVALID_PARAMETER_MESSAGE,
+    COMMAND_MISSING_REQUIRED_PARAMETER_MESSAGE,
+    COMMAND_REQUIRES_PLAYER_MESSAGE,
+
+}
