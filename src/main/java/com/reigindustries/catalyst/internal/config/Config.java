@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class Config {
 
-    private static HashMap<Option, String> settings;
+    private static HashMap<Option, String> settings = new HashMap<>();
 
 
 
