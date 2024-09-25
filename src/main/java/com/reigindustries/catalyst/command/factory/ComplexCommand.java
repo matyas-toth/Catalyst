@@ -786,7 +786,7 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
     }
 
     public void missingRequiredArgument() {
-        getSender().sendMessage(Config.get(Option.COMMAND_MISSING_REQUIRED_PARAMETER_MESSAGE).replace("${command}", getCommandName()).replace("${type}", this.expectedArgumentType).replace("${parameter}", String.valueOf(this.expectedArgumentIndex)));
+        getSender().sendMessage(Config.get(Option.COMMAND_MISSING_REQUIRED_PARAMETER_MESSAGE).replace("${command}", getCommandName()).replace("${parameter}", String.valueOf(this.expectedArgumentIndex)));
     }
 
 
