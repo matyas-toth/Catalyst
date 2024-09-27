@@ -20,7 +20,7 @@ Add this to your dependencies:
 <dependency>
     <groupId>com.github.matyas-toth</groupId>
     <artifactId>Catalyst</artifactId>
-    <version>0.1.2-BETA</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ Repositories:
 Dependencies:
 ```gradle
 	dependencies {
-		implementation 'com.github.matyas-toth:Catalyst:0.1.2-BETA'
+		implementation 'com.github.matyas-toth:Catalyst:1.0.0'
 	}
 ```
 
@@ -51,3 +51,6 @@ Dependencies:
 ### To-do
 - [ ] GUI Framework
 - [ ] Scoreboard Framework
+- [ ] Configuration File Framework
+- [ ] Per-player & General ORM/KV Database Framework
+- [ ] Velocity Support
