@@ -797,7 +797,7 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
         int index = 0;
         for(String arg : args) {
             if(this.expectedArgumentIndex == index) {
-                message += ChatColor.RED + "" + ChatColor.UNDERLINE + arg + " " + ChatColor.RESET;
+                message += ChatColor.RED + "" + ChatColor.UNDERLINE + arg + ChatColor.RESET + " ";
             } else {
                 message += ChatColor.GRAY + arg + " " + ChatColor.RESET;
             }
