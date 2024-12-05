@@ -5,6 +5,7 @@ import com.reigindustries.catalyst.event.Events;
 import com.reigindustries.catalyst.internal.Internal;
 import com.reigindustries.catalyst.internal.config.Config;
 import com.reigindustries.catalyst.internal.config.Option;
+import com.reigindustries.catalyst.playerdata.Schema;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -16,6 +17,7 @@ public final class Catalyst {
     private static Events events = new Events();
     private static Commands commands = new Commands();
     private static Internal internal = new Internal();
+    private static Schema schema = new Schema();
 
     public static void init(Plugin plugin) {
 
@@ -31,6 +33,7 @@ public final class Catalyst {
     public static Events events() {
         return events;
     }
+    public static Schema schema() { return schema; }
 
     public static Commands commands() {
         return commands;

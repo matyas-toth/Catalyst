@@ -1,5 +1,6 @@
 package com.reigindustries.catalyst.utils;
 
+import com.reigindustries.catalyst.Catalyst;
 import org.bukkit.Bukkit;
 
 public class NMS {
