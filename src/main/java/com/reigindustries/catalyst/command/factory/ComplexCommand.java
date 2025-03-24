@@ -361,7 +361,7 @@ public abstract class ComplexCommand implements CommandExecutor, TabCompleter {
         if (subCommand != null) {
 
             if(subCommand.isAnnotationPresent(Permission.class)) {
-                if(!sender.hasPermission(getClass().getAnnotation(Permission.class).value())) {
+                if(!sender.hasPermission(subCommand.getAnnotation(Permission.class).value())) {
                     noPermission();
                     return true;
                 }
