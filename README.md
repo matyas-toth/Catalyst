@@ -20,7 +20,7 @@ Add this to your dependencies:
 <dependency>
     <groupId>com.github.matyas-toth</groupId>
     <artifactId>Catalyst</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ Repositories:
 Dependencies:
 ```gradle
 	dependencies {
-		implementation 'com.github.matyas-toth:Catalyst:1.0.0'
+		implementation 'com.github.matyas-toth:Catalyst:1.0.1'
 	}
 ```
 
