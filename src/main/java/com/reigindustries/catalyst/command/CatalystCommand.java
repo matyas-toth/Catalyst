@@ -1,13 +1,9 @@
 package com.reigindustries.catalyst.command;
 
 import com.reigindustries.catalyst.Catalyst;
-import com.reigindustries.catalyst.utils.NMS;
+import org.bukkit.Bukkit;
 import org.bukkit.command.*;
-import org.bukkit.command.defaults.BukkitCommand;
-import org.bukkit.craftbukkit.v1_19_R2.CraftServer;
-import org.bukkit.craftbukkit.v1_19_R2.command.CraftCommandMap;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -59,15 +55,10 @@ public class CatalystCommand {
         });
 
         try {
-            String version = NMS.getBukkitVersion();
-            Class<?> craftServerClass = Class.forName("org.bukkit.craftbukkit." + version + ".CraftServer");
-            Method getCommandMapMethod = craftServerClass.getMethod("getCommandMap");
-            Object commandMap = getCommandMapMethod.invoke(plugin.getServer());
-
-            Class<?> simpleCommandMapClass = Class.forName("org.bukkit.craftbukkit." + version + ".command.CraftCommandMap");
-            Method registerMethod = simpleCommandMapClass.getMethod("register", String.class, Command.class);
-
-            registerMethod.invoke(commandMap, plugin.getName(), command);
+            java.lang.reflect.Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getServer());
+            commandMap.register(plugin.getName(), command);
 
 
         } catch (Exception e) {
