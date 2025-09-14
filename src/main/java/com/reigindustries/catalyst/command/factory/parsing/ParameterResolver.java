@@ -3,6 +3,7 @@ package com.reigindustries.catalyst.command.factory.parsing;
 import com.reigindustries.catalyst.command.factory.annotations.Join;
 import com.reigindustries.catalyst.command.factory.annotations.Optional;
 import org.bukkit.*;
+import org.bukkit.block.Biome;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
